@@ -73,30 +73,30 @@ h1 {
     }
 
     .wordle_grid, .used_letters {
-        gap: 3px; /* Reduce spacing between squares */
+        gap: 3px; 
     }
 
     .square, .letter_square {
-        width: 40px;       /* Adjust width */
-        height: 40px;      /* Adjust height */
-        font-size: 16px;   /* Adjust font size */
-        line-height: 40px; /* Center text vertically */
+        width: 40px;       
+        height: 40px;      
+        font-size: 16px;   
+        line-height: 40px; 
     }
 
     .used_letters {
-        max-width: 240px; /* Adjust max-width for the used letter board */
+        max-width: 240px; 
         padding: 10px;
         justify-content: center;
     }
 
     .enter_guess_box {
-        flex-direction: column; /* Stack guess input and button vertically */
+        flex-direction: column; 
         align-items: center;
         margin-top: 20px;
     }
 
     #guess, #check_guess_button, #new_game {
-        width: 80%; /* Adjust input and button widths */
+        width: 80%; 
         max-width: 300px;
         margin: 5px 0;
     }
