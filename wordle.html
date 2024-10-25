@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1><b>Welcome to Wordle!</b></h1>
+
+    <div class="wrapper">
+        <div class="wordle_grid" id="grid_container"></div>
+        <div class="used_letters" id="used_letter_board"></div>
+    </div>
+    
+    <form class="enter_guess_box">
+        <input type="text" id="guess" placeholder="Enter your guess" class="centered_placeholder" maxlength="5">
+        <input type="button" id="check_guess_button" value="Check Guess">
+        <input type="button" id="new_game" value="New Game" class="new_game_button" onclick="window.location.reload()" style="display:none">
+    </form>
+
+
+    
+
+</body>
+
+<script>
+
+    const gameState = {
+        currentWord: "",      
+        totalGuesses: 0,      
+        currentRow: 0,        
+        maxRows: 6,           
+        maxColumns: 5,        
+        
+        selectWord(words) {
+            this.currentWord = words[Math.floor(Math.random() * words.length)].toLowerCase();
+            console.log("The word is: " + this.currentWord); 
+        },
+
+        reset() {
+            this.totalGuesses = 0;
+            this.currentRow = 0;
+            this.currentWord = "";
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const words = ['apple', 'berry', 'cello', 'lemon', 'sheep', 'horse', 'tiger', 
+                        'raven', 'zebra', 'crabs', 'goats', 'horns', 'snail', 'melon', 'mouse', 'peach', 
+                        'bells', 'viola', 'grape', 'mango', 'piano', 'drums', 'harps', 'plumb', 'guava', 
+                        'geese', 'flute', 'whale', 'camel', 'kiwis'];
+
+        function createGrid() {
+            const grid_container = document.getElementById('grid_container');
+            for (let i = 0; i < gameState.maxRows * gameState.maxColumns; i++) { 
+                let square = document.createElement("span");
+                square.classList.add("square");
+                square.setAttribute("id", `square-${i}`);
+                grid_container.appendChild(square);
+            }
+        }
+
+        createGrid();
+        createUsedLetterBoard();
+        gameState.selectWord(words);
+
+        async function take_guess() {
+            let guess = document.getElementById("guess").value.trim().toLowerCase();
+
+            if (guess.length !== gameState.maxColumns) {
+                alert("Please enter a 5-letter word");
+                return;
+            }
+
+            const isValidWord = await check_word(guess);
+
+            if (!isValidWord) {
+                alert("Please enter a valid, 5-letter word.")
+            } else {
+
+                gameState.totalGuesses++;
+                write_guess(guess);
+                gameState.currentRow++;
+
+                document.getElementById("guess").value = "";
+
+                if (gameState.currentRow >= gameState.maxRows) {
+                    show_new_game_button();
+                }
+            }
+        }
+
+        function write_guess(guess) {
+            let correct_letters = 0; 
+
+            for (let i = 0; i < guess.length; i++) {
+                let squareIndex = gameState.currentRow * gameState.maxColumns + i;
+                let square = document.getElementById(`square-${squareIndex}`);
+                square.textContent = guess[i].toUpperCase();
+
+                if (verify_guess(square, guess[i], gameState.currentWord[i], gameState.currentWord)) {
+                    correct_letters++;
+                }
+            }
+
+            setTimeout(function() {
+                determine_victory(correct_letters, gameState.totalGuesses);  
+            }, 300);
+        }
+
+        function verify_guess(square, guessedLetter, correctLetter, currentWord) {
+            const letterSquare = document.getElementById(`letter-${guessedLetter.toUpperCase()}`);  
+
+            if (guessedLetter === correctLetter) {
+                square.style.backgroundColor = "green";
+                if (letterSquare) letterSquare.style.backgroundColor = "green";
+                return true; 
+            } else if (currentWord.includes(guessedLetter)) {
+                square.style.backgroundColor = "yellow";
+                if (letterSquare) letterSquare.style.backgroundColor = "yellow";
+            } else {
+                square.style.backgroundColor = "gray";
+                if (letterSquare) letterSquare.style.backgroundColor = "gray";
+            }
+
+            return false; 
+        }
+
+        function determine_victory(correct_letters, total_guesses) {
+            if (correct_letters === gameState.maxColumns) {
+                alert(`Congratulations, you guessed the word in ${total_guesses} ${total_guesses === 1 ? 'attempt' : 'attempts'}!`);
+                show_new_game_button();
+            } else if (gameState.totalGuesses === gameState.maxRows) {
+                alert("The correct word was " + gameState.currentWord + ". Better luck next time!");
+            }
+        }
+
+        function show_new_game_button() {
+            document.getElementById("new_game").style.display = "block";
+        }
+
+        async function check_word(guess) {
+            const apiUrl = `https://wordsapiv1.p.rapidapi.com/words/${guess}`;
+
+            const headers = {
+                "X-RapidAPI-Key": "705edeb7d3msh120af25ecf7a474p1d97acjsn4752089d5e6c",
+                "X-RapidAPI-Host": "wordsapiv1.p.rapidapi.com"
+            };
+
+            try {
+                const response = await fetch(apiUrl, { headers });
+
+                if (response.status === 404) {
+                    return false;
+                }
+                return response.ok;
+            } catch (error) {
+                console.error('Error', error);
+                return false;
+            }
+        }
+
+        function createUsedLetterBoard() {
+            const usedLetterBoard = document.getElementById('used_letter_board');
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+            alphabet.forEach(letter => {
+                const letterSquare = document.createElement("span");
+                letterSquare.classList.add("letter_square");
+                letterSquare.setAttribute("id", `letter-${letter}`);
+                letterSquare.textContent = letter;
+                usedLetterBoard.appendChild(letterSquare);
+            });
+        }
+
+        document.getElementById("guess").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); 
+                take_guess(); 
+            }
+        });
+
+        document.getElementById("check_guess_button").addEventListener("click", function() {
+            take_guess();
+        });
+
+    });
+</script>
+
+</html>
