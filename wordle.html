@@ -12,7 +12,7 @@
 
     <h1><b>Welcome to Wordle!</b></h1>
 
-    <div id="average_guesses">Average Guesses: 0</div>
+    <div id="average_guesses">Average Guesses: </div>
 
     <div class="wrapper">
         <div class="wordle_grid" id="grid_container"></div>
@@ -35,7 +35,7 @@
     function setCookie(name, value, days) {
             const d = new Date();
             d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+            document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
         }
 
         function getCookie(name) {
@@ -96,7 +96,7 @@
 
     document.addEventListener("DOMContentLoaded", function() {
 
-        const cookieData = getCookie("average_guesses");
+        const cookieData = getCookie("averageGuesses");
         if (cookieData) {
             const parsedData = JSON.parse(cookieData);
             gameState.display_average_guesses(parsedData.totalGames, parsedData.totalGuesses);
