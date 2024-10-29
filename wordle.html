@@ -12,6 +12,8 @@
 
     <h1><b>Welcome to Wordle!</b></h1>
 
+    <div id="average_guesses">Average Guesses: 0</div>
+
     <div class="wrapper">
         <div class="wordle_grid" id="grid_container"></div>
         <div class="used_letters" id="used_letter_board"></div>
@@ -30,6 +32,20 @@
 
 <script>
 
+    function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const cookies = document.cookie.split("; ");
+            for (let cookie of cookies) {
+                const [cookieName, cookieValue] = cookie.split("=");
+                if (cookieName === name) return decodeURIComponent(cookieValue);
+            }
+        }
+
     const gameState = {
         currentWord: "",      
         totalGuesses: 0,      
@@ -46,10 +62,45 @@
             this.totalGuesses = 0;
             this.currentRow = 0;
             this.currentWord = "";
+        },
+
+        update_average_guesses() {
+            let cookieData = getCookie("averageGuesses");
+            let totalGames = 0;
+            let totalGuesses = 0;
+
+            if (cookieData) {
+                const parsedData = JSON.parse(cookieData);
+                totalGames = parsedData.totalGames;
+                totalGuesses = parsedData.totalGuesses;
+            }
+
+            totalGames++;
+            totalGuesses += this.totalGuesses;
+
+            const updatedData = JSON.stringify({ totalGames, totalGuesses });
+            setCookie("averageGuesses", updatedData, 30);
+
+            this.display_average_guesses(totalGames, totalGuesses);
+        },
+
+        display_average_guesses(totalGames, totalGuesses) {
+            const averageGuesses = (totalGuesses / totalGames).toFixed(2);
+            const averageDisplay = document.getElementById("average_guesses");
+
+            if (averageDisplay) {
+                averageDisplay.textContent = `Average guesses per game: ${averageGuesses}`;
+            }
         }
     };
 
     document.addEventListener("DOMContentLoaded", function() {
+
+        const cookieData = getCookie("average_guesses");
+        if (cookieData) {
+            const parsedData = JSON.parse(cookieData);
+            gameState.display_average_guesses(parsedData.totalGames, parsedData.totalGuesses);
+        }
 
         const words = ['apple', 'berry', 'cello', 'lemon', 'sheep', 'horse', 'tiger', 
                         'raven', 'zebra', 'crabs', 'goats', 'horns', 'snail', 'melon', 'mouse', 'peach', 
@@ -135,9 +186,11 @@
         function determine_victory(correct_letters, total_guesses) {
             if (correct_letters === gameState.maxColumns) {
                 alert(`Congratulations, you guessed the word in ${total_guesses} ${total_guesses === 1 ? 'attempt' : 'attempts'}!`);
+                gameState.update_average_guesses();
                 show_new_game_button();
             } else if (gameState.totalGuesses === gameState.maxRows) {
                 alert("The correct word was " + gameState.currentWord + ". Better luck next time!");
+                gameState.update_average_guesses();
             }
         }
 
